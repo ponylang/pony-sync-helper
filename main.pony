@@ -5,6 +5,7 @@ use "debug"
 use "files"
 use "interpolate"
 use "json"
+use "regex"
 use "time"
 
 actor Main
@@ -98,6 +99,10 @@ primitive ListReposIssues
     headers: Array[(String, String)] val,
     repos: Array[String] val)
   =>
+    Debug("LISTING ISSUES FOR: ")
+    Debug(repos)
+    Debug(" ")
+
     for repo in repos.values() do
       try
         let url = "https://api.github.com/repos/" + repo + "/issues?since=" + since
@@ -162,10 +167,56 @@ class val ListRepos
         repos.push(i'("full_name")?.as_string()?)
       end
 
-      ListReposIssues(_auth, _out, _err, _since, _headers, consume repos)
+      (let next_link, let last_link) = try
+        _get_next_and_last_link(resp.headers("Link")?)
+      else
+        (None, None)
+      end
+
+      match next_link
+      | let link: String =>
+        Asking(_auth,
+          link,
+          CheckerWrapper(_err, ListRepos(_auth, _out, _err, _headers, _since, consume repos))
+          where method = "GET", headers = _headers,
+          failure =
+            {(reason: FailureReason) =>
+              match reason
+              | AuthFailed => _err.print("auth failed")
+              | ConnectionClosed => _err.print("connection closed")
+              | ConnectFailed => _err.print("could not connect to " + link)
+              end
+            })?
+      else
+        ListReposIssues(_auth, _out, _err, _since, _headers, consume repos)
+      end
     else
       _err.print("error parsing")
     end
+
+  fun _get_next_and_last_link(links_string: String): ((String | None), (String | None)) =>
+    // Link: <https://api.github.com/organizations/12997238/repos?page=2>; rel="next", <https://api.github.com/organizations/12997238/repos?page=2>; rel="last"
+    let links_parts: Array[String] = links_string.split(",")
+
+    var next: (None | String) = None
+    var last: (None | String) = None
+
+    try
+      let regex = Regex("""\<(.*)\>; rel="(.*)"""")?
+
+      for lp in links_parts.values() do
+        let matched = regex(lp)?
+        let link: String = matched(0)?
+        let rel: String = matched(1)?
+
+        match rel
+        | "next" => next = link
+        | "last" => last = link
+        end
+      end
+    end
+
+    (next, last)
 
 class val ListIssues
   let _out: OutStream
