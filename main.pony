@@ -19,9 +19,9 @@ actor Main
         "Gather recently modified issues from repos or all repos in a project (defaults to last 7 days)",
         [
           OptionSpec.string("since", "Get issues since a given date" where short' = 's', default' = default_since)
-          OptionSpec.string_seq("repo", "Target repo" where short' = 'r')
           OptionSpec.string("github_token", "GitHub personal access token" where short' = 't', default' = "")
-          OptionSpec.string("org", "Target org" where short' = 'o', default' = "")
+          OptionSpec.bool("show_empty", "Show repos with no issues or PRs" where short' = 'e', default' = false)
+          OptionSpec.string("org", "Target org" where short' = 'o')
         ]
       )? .> add_help()?
     else
@@ -45,10 +45,9 @@ actor Main
 
     let since = cmd.option("since").string()
 
-    let repos: Array[String] val =
-      recover Array[String] .> concat(cmd.option("repo").string_seq().values()) end
-
     let org = cmd.option("org").string()
+
+    let show_empty = cmd.option("show_empty").bool()
 
     let headers = recover val
       [
@@ -58,156 +57,45 @@ actor Main
 
     try
       let auth = env.root as AmbientAuth
-      if not (org.size() == 0) then
-        GetRepos(auth, env.out, env.err, org, headers, since, repos)
-      else
-        ListReposIssues(auth, env.out, env.err, since, headers, repos)
-      end
-    end
-
-primitive GetRepos
-  fun apply(auth: AmbientAuth,
-    out: OutStream,
-    err: OutStream,
-    org: String,
-    headers: Array[(String, String)] val,
-    since: String,
-    repos: Array[String] val)
-  =>
-    try
-      let url = "https://api.github.com/orgs/" + org + "/repos"
-
-      Asking(auth,
-        url,
-        CheckerWrapper(err, ListRepos(auth, out, err, headers, since, repos))
-        where method = "GET", headers = headers,
-        failure =
-          {(reason: FailureReason) =>
-            match reason
-            | AuthFailed => err.print("auth failed")
-            | ConnectionClosed => err.print("connection closed")
-            | ConnectFailed => err.print("could not connect to " + url)
-            end
-          })?
-    end
-
-primitive ListReposIssues
-  fun apply(auth: AmbientAuth,
-    out: OutStream,
-    err: OutStream,
-    since: String,
-    headers: Array[(String, String)] val,
-    repos: Array[String] val)
-  =>
-    Debug("LISTING ISSUES FOR: ")
-    Debug(repos)
-    Debug(" ")
-
-    for repo in repos.values() do
-      try
-        let url = "https://api.github.com/repos/" + repo + "/issues?since=" + since
-
-        Asking(auth,
-          url,
-          CheckerWrapper(err, ListIssues(out, err, repo))
-          where method = "GET", headers = headers)?
-      end
+      let ctx: Context iso = recover Context(headers, org, since, show_empty, env.out, env.err, auth) end
+      let hsm = HelperStateMachine(consume ctx)
+      hsm.start()
     end
 
 class val CheckerWrapper
-  let _err: OutStream
+  let _err: {(Response)} val
   let _next: {(Response)} val
 
-  new val create(err: OutStream, next: {(Response)} val) =>
+  new val create(err: {(Response)} val, next: {(Response)} val) =>
     _err = err
     _next = next
 
   fun apply(resp: Response) =>
     if resp.status != 200 then
-      _err.print("ERROR!")
-      for (k, v) in resp.headers.pairs() do
-        _err.print("".join(["("; k; ", "; v; ")"].values()))
-      end
-      _err.print(resp.body)
+      _err(resp)
     else
       _next(resp)
     end
 
-class val ListRepos
-  let _auth: AmbientAuth
-  let _out: OutStream
-  let _err: OutStream
-  let _headers: Array[(String, String)] val
-  let _since: String
-  let _repos: Array[String] val
-
-  new val create(auth: AmbientAuth,
-    out: OutStream,
-    err: OutStream,
-    headers: Array[(String, String)] val,
-    since: String,
-    repos: Array[String] val)
-  =>
-    _auth = auth
-    _out = out
-    _err = err
-    _headers = headers
-    _since = since
-    _repos = repos
-
-  fun apply(resp: Response) =>
-    let body: String = recover val String .> append(resp.body) end
-    try
-      let repos = recover iso Array[String] .> concat(_repos.values()) end
-
-      let json = recover val JsonDoc .> parse(body)? end
-
-      for i in Extractor(json.data).as_array()?.values() do
-        let i' = Extractor(i)
-        repos.push(i'("full_name")?.as_string()?)
-      end
-
-      (let next_link, let last_link) = try
-        _get_next_and_last_link(resp.headers("Link")?)
-      else
-        (None, None)
-      end
-
-      match next_link
-      | let link: String =>
-        Asking(_auth,
-          link,
-          CheckerWrapper(_err, ListRepos(_auth, _out, _err, _headers, _since, consume repos))
-          where method = "GET", headers = _headers,
-          failure =
-            {(reason: FailureReason) =>
-              match reason
-              | AuthFailed => _err.print("auth failed")
-              | ConnectionClosed => _err.print("connection closed")
-              | ConnectFailed => _err.print("could not connect to " + link)
-              end
-            })?
-      else
-        ListReposIssues(_auth, _out, _err, _since, _headers, consume repos)
-      end
-    else
-      _err.print("error parsing")
-    end
-
-  fun _get_next_and_last_link(links_string: String): ((String | None), (String | None)) =>
+primitive GetNextAndLastLink
+  fun apply(resp: Response): ((String | None), (String | None)) =>
     // Link: <https://api.github.com/organizations/12997238/repos?page=2>; rel="next", <https://api.github.com/organizations/12997238/repos?page=2>; rel="last"
-    let links_parts: Array[String] = links_string.split(",")
 
     var next: (None | String) = None
     var last: (None | String) = None
 
     try
-      let regex = Regex("""\<(.*)\>; rel="(.*)"""")?
+      let links_string = resp.headers("Link")?
+
+      let links_parts: Array[String] = links_string.split(",")
+
+      let regex = Regex("<(.*)>; rel=\"(.*)\"")?
 
       for lp in links_parts.values() do
         let matched = regex(lp)?
-        let link: String = matched(0)?
-        let rel: String = matched(1)?
+
+        let link: String = matched(1)?
+        let rel: String = matched(2)?
 
         match rel
         | "next" => next = link
@@ -218,55 +106,62 @@ class val ListRepos
 
     (next, last)
 
-class val ListIssues
-  let _out: OutStream
-  let _err: OutStream
-  let _full_name: String
-
-  new val create(out: OutStream, err: OutStream, full_name: String) =>
-    _out = out
-    _err = err
-    _full_name = full_name
-
-  fun apply(resp: Response) =>
-    let issues = Array[(String, I64, String)]
-    let prs = Array[(String, I64, String)]
+primitive ExtractReposNextLastFromResponse
+  fun apply(resp: Response): (Array[String] val, (None | String), (None | String)) ? =>
     let body: String = recover val String .> append(resp.body) end
-    try
-      let json = recover val JsonDoc .> parse(body)? end
+    let repos = recover iso Array[String] end
+    let json = recover val JsonDoc .> parse(body)? end
 
-      for i in Extractor(json.data).as_array()?.values() do
-        let i' = Extractor(i)
-        let title = i'("title")?.as_string()?
-        let number = i'("number")?.as_i64()?
-        let url = i'("html_url")?.as_string()?
-        try
-          i'("pull_request")?
-          prs.push((title, number, url))
-        else
-          issues.push((title, number, url))
-        end
-      end
-
-      let output = recover iso String end
-
-      let int = Interpolate("  * {} ([{}]({}))\n")
-
-      output.append("**" + _full_name + "**\n")
-
-      output.append("* prs: " + prs.size().string() + "\n")
-
-      for (title, number, url) in prs.values() do
-        output.append(int([title; number; url].values()))
-      end
-
-      output.append("* issues: " + issues.size().string() + "\n")
-
-      for (title, number, url) in issues.values() do
-        output.append(int([title; number; url].values()))
-      end
-
-      _out.print(output + "\n")
-    else
-      _err.print("error parsing")
+    for i in Extractor(json.data).as_array()?.values() do
+      let i' = Extractor(i)
+      repos.push(i'("full_name")?.as_string()?)
     end
+
+    (let next_link, let last_link) = GetNextAndLastLink(resp)
+
+    (consume repos, next_link, last_link)
+
+primitive ExtractIssuesNextLastFromResponse
+  fun apply(resp: Response): (Array[(Issue | PR)] val, (None | String), (None | String)) ? =>
+    let issues = recover iso Array[(Issue | PR)] end
+
+    let body: String = recover val String .> append(resp.body) end
+
+    (let next, let last) = GetNextAndLastLink(resp)
+
+    let json = recover val JsonDoc .> parse(body)? end
+
+    for i in Extractor(json.data).as_array()?.values() do
+      let i' = Extractor(i)
+      let title = i'("title")?.as_string()?
+      let number = i'("number")?.as_i64()?
+      let url = i'("html_url")?.as_string()?
+      try
+        i'("pull_request")?
+        issues.push(PR(title, number, url))
+      else
+        issues.push(Issue(title, number, url))
+      end
+    end
+
+    (consume issues, next, last)
+
+class val Issue
+  let title: String
+  let number: I64
+  let url: String
+
+  new val create(title': String, number': I64, url': String) =>
+    title = title'
+    number = number'
+    url = url'
+
+class val PR
+  let title: String
+  let number: I64
+  let url: String
+
+  new val create(title': String, number': I64, url': String) =>
+    title = title'
+    number = number'
+    url = url'
