@@ -6,10 +6,10 @@ This is a tool for generating a list of issues to review during the Pony sync me
 
 ## Building
 
-This project is built to `stable`. It relies on SSL, so you must pass an SSL version to use.
+It relies on SSL, so you must pass an SSL version to use.
 
 ```bash
-stable env ponyc -Dopenssl_0.9.0
+corral run -- ponyc -Dopenssl_0.9.0
 ```
 
 ## Usage
