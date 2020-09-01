@@ -1,4 +1,5 @@
-/.deps
 /pony-sync-helper
 /pony-sync-helper.dSYM
 environment
+_repos/
+_corral
