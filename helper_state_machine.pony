@@ -17,7 +17,8 @@ primitive ErrorState is HelperState
 primitive AwaitingRepos is HelperState
   fun start(hsm: HelperStateMachine ref): HelperState =>
     try
-      let url = "https://api.github.com/orgs/" + hsm.ctx.org + "/repos"
+      let url: String =
+        "https://api.github.com/orgs/" + hsm.ctx.org + "/repos"
       GetRepoNames(hsm, url)?
     end
     AwaitingRepos
