@@ -51,7 +51,7 @@ actor Main
 
     let headers = recover val
       [
-        ("Authorization", "token " + token)
+        ("Authorization", recover val "token " + token end)
       ]
     end
 
