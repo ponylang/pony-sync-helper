@@ -85,7 +85,7 @@ primitive GetNextAndLastLink
     var last: (None | String) = None
 
     try
-      let links_string = resp.headers("Link")?
+      let links_string = resp.headers("link")?
 
       let links_parts: Array[String] = links_string.split(",")
 
