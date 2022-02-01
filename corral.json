@@ -1,14 +1,25 @@
 {
+  "packages": [],
   "deps": [
     {
-      "locator": "github.com/ponylang/net_ssl.git"
+      "locator": "github.com/ponylang/net_ssl.git",
+      "version": "1.1.8"
     },
     {
-      "locator": "github.com/ponylang/regex.git"
+      "locator": "github.com/ponylang/regex.git",
+      "version": "1.1.2"
     },
     {
-      "locator": "github.com/ponylang/http.git"
+      "locator": "github.com/ponylang/http.git",
+      "version": "0.4.5"
     }
   ],
-  "info": {}
+  "info": {
+    "description": "",
+    "homepage": "",
+    "license": "",
+    "documentation_url": "",
+    "version": "",
+    "name": ""
+  }
 }

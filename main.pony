@@ -11,14 +11,9 @@ use "time"
 actor Main
   new create(env: Env) =>
     let cs = try
-      let current_time_sec = Time.now()._1
-      let default_since_time_sec = current_time_sec - (7 * 24  * 60 * 60)
-      let default_since = PosixDate(default_since_time_sec, 0).format("%F")?
-
       CommandSpec.leaf("pony_sync_helper",
         "Gather recently modified issues from repos or all repos in a project (defaults to last 7 days)",
         [
-          OptionSpec.string("since", "Get issues since a given date" where short' = 's', default' = default_since)
           OptionSpec.string("github_token", "GitHub personal access token" where short' = 't', default' = "")
           OptionSpec.bool("show_empty", "Show repos with no issues or PRs" where short' = 'e', default' = false)
           OptionSpec.string("org", "Target org" where short' = 'o')
@@ -43,8 +38,6 @@ actor Main
 
     let token = cmd.option("github_token").string()
 
-    let since = cmd.option("since").string()
-
     let org = cmd.option("org").string()
 
     let show_empty = cmd.option("show_empty").bool()
@@ -55,12 +48,15 @@ actor Main
       ]
     end
 
-    try
-      let auth = env.root as AmbientAuth
-      let ctx: Context iso = recover Context(headers, org, since, show_empty, env.out, env.err, auth) end
-      let hsm = HelperStateMachine(consume ctx)
-      hsm.start()
+    let ctx: Context iso = recover Context(headers,
+      org,
+      show_empty,
+      env.out,
+      env.err,
+      env.root)
     end
+    let hsm = HelperStateMachine(consume ctx)
+    hsm.start()
 
 class val CheckerWrapper
   let _err: {(Response)} val

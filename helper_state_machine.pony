@@ -127,7 +127,7 @@ primitive GetRepoIssues
     | let u: String =>
       u
     else
-      "https://api.github.com/repos/" + repo + "/issues?since=" + hsm.ctx.since
+      "https://api.github.com/repos/" + repo + "/issues?labels=discuss%20during%20sync"
     end
 
     Asking(hsm.ctx.auth,
@@ -142,7 +142,6 @@ class Context
   let prs: Map[String, Array[(PR)]] = Map[String, Array[PR]]
   let org: String
   let headers: Array[(String, String)] val
-  let since: String
   let show_empty: Bool
   let out: OutStream
   let err: OutStream
@@ -150,7 +149,6 @@ class Context
 
   new create(headers': Array[(String, String)] val,
     org': String,
-    since': String,
     show_empty': Bool,
     out': OutStream,
     err': OutStream,
@@ -158,7 +156,6 @@ class Context
   =>
     headers = headers'
     org = org'
-    since = since'
     show_empty = show_empty'
     out = out'
     err = err'
