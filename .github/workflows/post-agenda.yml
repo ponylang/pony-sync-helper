@@ -21,7 +21,7 @@ jobs:
       - name: Run sync-helper
         run: |
           echo 'AGENDA<<EOF' >> $GITHUB_ENV
-          ./pony-sync-helper --org ponylang --github_token ${{PONY_SYNC_HELPER_GITHUB_TOKEN }}>> $GITHUB_ENV
+          ./pony-sync-helper --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN" >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
         env:
           PONY_SYNC_HELPER_GITHUB_TOKEN: ${{ secrets.PONYLANG_MAIN_API_TOKEN }}
