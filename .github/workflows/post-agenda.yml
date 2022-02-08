@@ -1,0 +1,33 @@
+name: Post sync agenda
+
+on:
+  schedule:
+    - cron: "0 12 * * 2"
+
+jobs:
+  post-agenda:
+    name: Post sync agenda to Zulip
+    runs-on: ubuntu-latest
+    container:
+      image: ponylang/shared-docker-ci-x86-64-unknown-linux-builder-with-libressl-3.4.1:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Today's date
+        id: vars
+        run: echo ::set-output name=today_date::"$(date +%Y-%m-%d)"
+      - name: Build sync-helper
+        run: corral run -- ponyc -Dopenssl_0.9.0
+      - name: Run sync-helper
+        run: echo ::set-output name=agenda::"$(./pony-sync-helper --org ponylang)"
+        env:
+          PONY_SYNC_HELPER_GITHUB_TOKEN: $${{ PONYLANG_MAIN_API_TOKEN }}
+      - name: Post agenda
+        uses: zulip/github-actions-zulip@35d7ad8e98444f894dcfe1d4e17332581d28ebeb
+        with:
+          api-key: ${{ secrets.ZULIP_SYNC_EVENT_API_KEY }}
+          email: ${{ secrets.ZULIP_SYNC_EVENT_EMAIL }}
+          organization-url: 'https://ponylang.zulipchat.com/'
+          to: notifications
+          type: stream
+          topic: ${{ steps.vars.output.todays_date }}
+          content: ${{ steps.vars.output.agenda }}
