@@ -1,11 +1,11 @@
-name: Linux ponyc update breakage test
+name: Rebuild builder images
 
 on:
   repository_dispatch:
     types: [shared-docker-linux-builders-updated]
 
 jobs:
-  rebuild-builder:
+  builder:
     name: Update builder
     runs-on: ubuntu-latest
     steps:
@@ -17,32 +17,6 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       - name: Build and push
         run: bash .ci-dockerfiles/builder/build-and-push.bash
-      - name: Send alert on failure
-        if: ${{ failure() }}
-        uses: zulip/github-actions-zulip@35d7ad8e98444f894dcfe1d4e17332581d28ebeb
-        with:
-          api-key: ${{ secrets.ZULIP_SCHEDULED_JOB_FAILURE_API_KEY }}
-          email: ${{ secrets.ZULIP_SCHEDULED_JOB_FAILURE_EMAIL }}
-          organization-url: 'https://ponylang.zulipchat.com/'
-          to: notifications
-          type: stream
-          topic: ${{ github.repository }} scheduled job failure
-          content: ${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }} failed.
-
-
-  vs-ponyc-main-linux:
-    name: Verify main against ponyc main on Linux
-    needs:
-      - rebuild-builder
-    runs-on: ubuntu-latest
-    container:
-      image: ponylang/pony-sync-helper-ci-builder:latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Test with a recent ponyc from main
-        run: |
-        corral fetch
-        corral run -- ponyc -Dopenssl_0.9.0
       - name: Send alert on failure
         if: ${{ failure() }}
         uses: zulip/github-actions-zulip@35d7ad8e98444f894dcfe1d4e17332581d28ebeb
