@@ -2,7 +2,7 @@ name: Post sync agenda
 
 on:
   schedule:
-    - cron: "50 17 * * 2"
+    - cron: "15 18 * * 2"
 
 jobs:
   post-agenda:
@@ -31,7 +31,7 @@ jobs:
           api-key: ${{ secrets.ZULIP_SYNC_EVENT_API_KEY }}
           email: ${{ secrets.ZULIP_SYNC_EVENT_EMAIL }}
           organization-url: 'https://ponylang.zulipchat.com/'
-          to: notifications
+          to: sync
           type: stream
           topic: ${{ env.DATE }}
           content: ${{ env.AGENDA }}
