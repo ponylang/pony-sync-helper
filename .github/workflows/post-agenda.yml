@@ -2,7 +2,7 @@ name: Post sync agenda
 
 on:
   schedule:
-    - cron: "30 17 * * 2"
+    - cron: "50 17 * * 2"
 
 jobs:
   post-agenda:
@@ -21,10 +21,10 @@ jobs:
       - name: Run sync-helper
         run: |
           echo 'AGENDA<<EOF' >> $GITHUB_ENV
-          ./pony-sync-helper --org ponylang >> $GITHUB_ENV
+          ./pony-sync-helper --org ponylang --github_token ${{PONY_SYNC_HELPER_GITHUB_TOKEN }}>> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
         env:
-          PONY_SYNC_HELPER_GITHUB_TOKEN: $${{ secrets.PONYLANG_MAIN_API_TOKEN }}
+          PONY_SYNC_HELPER_GITHUB_TOKEN: ${{ secrets.PONYLANG_MAIN_API_TOKEN }}
       - name: Post agenda
         uses: zulip/github-actions-zulip@35d7ad8e98444f894dcfe1d4e17332581d28ebeb
         with:
