@@ -1,6 +1,7 @@
 use "collections"
 use http = "http"
 use "net_ssl"
+use "net"
 
 primitive AuthFailed
 primitive ConnectionClosed
@@ -54,7 +55,7 @@ primitive Asking
     end
 
     let sentreq =
-      http.HTTPClient(auth, sslctx)(consume req, AskingNotifyFactory(success, failure))?
+      http.HTTPClient(TCPConnectAuth(auth), sslctx)(consume req, AskingNotifyFactory(success, failure))?
 
 class AskingNotifyFactory is http.HandlerFactory
   let _success: {(Response)} val
