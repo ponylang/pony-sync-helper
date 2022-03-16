@@ -1,8 +1,9 @@
 name: Post sync agenda
 
 on:
-  schedule:
-    - cron: "15 17 * * 2"
+  repository_dispatch:
+    types:
+      - post-agenda
 
 jobs:
   post-agenda:
