@@ -2,16 +2,12 @@
   "packages": [],
   "deps": [
     {
-      "locator": "github.com/ponylang/net_ssl.git",
-      "version": "1.2.1"
-    },
-    {
       "locator": "github.com/ponylang/regex.git",
       "version": "1.1.5"
     },
     {
       "locator": "github.com/ponylang/http.git",
-      "version": "0.5.2"
+      "version": "0.5.4"
     },
     {
       "locator": "github.com/ponylang/json.git",
