@@ -1,6 +1,7 @@
 name: Post sync agenda
 
 on:
+  workflow_dispatch:
   repository_dispatch:
     types:
       - post-agenda
@@ -14,16 +15,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Today's date
-        run: echo "DATE=$(date +%Y-%m-%d)" >> $GITHUB_ENV
+        run: echo "DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
       - name: Build sync-helper
         run: |
           corral fetch
           corral run -- ponyc -Dopenssl_0.9.0
       - name: Run sync-helper
         run: |
-          echo 'AGENDA<<EOF' >> $GITHUB_ENV
-          ./pony-sync-helper --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN" >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+          {
+            echo 'AGENDA<<EOF'
+            ./pony-sync-helper --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
         env:
           PONY_SYNC_HELPER_GITHUB_TOKEN: ${{ secrets.PONYLANG_MAIN_API_TOKEN }}
       - name: Post agenda
