@@ -9,7 +9,7 @@ jobs:
     name: Update builder
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Docker login
         run: docker login -u "$DOCKER_USERNAME" -p "$DOCKER_PASSWORD"
         env:
@@ -38,7 +38,7 @@ jobs:
     container:
       image: ponylang/pony-sync-helper-ci-builder:latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Test with a recent ponyc from main
         run: |
           corral fetch
