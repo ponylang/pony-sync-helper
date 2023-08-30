@@ -8,7 +8,7 @@ set -o nounset
 #
 
 DOCKERFILE_DIR="$(dirname "$0")"
-NAME="ponylang/pony-sync-helper-ci-builder"
+NAME="ghcr.io/ponylang/pony-sync-helper-ci-builder"
 
 # built from x86-64-unknown-linux-builder release tag
 FROM_TAG=release
