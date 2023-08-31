@@ -11,7 +11,7 @@ jobs:
     name: Post sync agenda to Zulip
     runs-on: ubuntu-latest
     container:
-      image: docker://ghcr.io/ponylang/pony-sync-helper-ci-builder:release
+      image: ghcr.io/ponylang/pony-sync-helper-ci-builder:release
     steps:
       - uses: actions/checkout@v3
       - name: Today's date

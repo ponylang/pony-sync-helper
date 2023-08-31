@@ -37,7 +37,7 @@ jobs:
       - rebuild-builder
     runs-on: ubuntu-latest
     container:
-      image: docker://ghcr.io/ponylang/pony-sync-helper-ci-builder:latest
+      image: ghcr.io/ponylang/pony-sync-helper-ci-builder:latest
     steps:
       - uses: actions/checkout@v3
       - name: Test with a recent ponyc from main

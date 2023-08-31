@@ -26,7 +26,7 @@ jobs:
     name: Verify PR builds on Linux with most recent ponyc nightly
     runs-on: ubuntu-latest
     container:
-      image: docker://ghcr.io/ponylang/pony-sync-helper-ci-builder:release
+      image: ghcr.io/ponylang/pony-sync-helper-ci-builder:release
     steps:
       - uses: actions/checkout@v3
       - name: Builds with the most recent ponyc nightly
