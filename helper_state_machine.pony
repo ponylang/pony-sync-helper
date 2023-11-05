@@ -1,5 +1,6 @@
 use "asking"
 use "collections"
+use  h = "http"
 use "interpolate"
 
 trait val HelperState
@@ -127,7 +128,7 @@ primitive GetRepoIssues
     | let u: String =>
       u
     else
-      "https://api.github.com/repos/" + repo + "/issues?labels=discuss%20during%20sync"
+      "https://api.github.com/repos/" + repo + "/issues?labels=" + h.URLEncode.encode(hsm.ctx.label, h.URLPartQuery)?
     end
 
     Asking(hsm.ctx.auth,
@@ -141,6 +142,7 @@ class Context
   let issues: Map[String, Array[(Issue)]] = Map[String, Array[Issue]]
   let prs: Map[String, Array[(PR)]] = Map[String, Array[PR]]
   let org: String
+  let label: String
   let headers: Array[(String, String)] val
   let show_empty: Bool
   let out: OutStream
@@ -149,6 +151,7 @@ class Context
 
   new create(headers': Array[(String, String)] val,
     org': String,
+    label': String,
     show_empty': Bool,
     out': OutStream,
     err': OutStream,
@@ -156,6 +159,7 @@ class Context
   =>
     headers = headers'
     org = org'
+    label = label'
     show_empty = show_empty'
     out = out'
     err = err'

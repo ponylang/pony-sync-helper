@@ -17,6 +17,7 @@ actor Main
           OptionSpec.string("github_token", "GitHub personal access token" where short' = 't', default' = "")
           OptionSpec.bool("show_empty", "Show repos with no issues or PRs" where short' = 'e', default' = false)
           OptionSpec.string("org", "Target org" where short' = 'o')
+          OptionSpec.string("label", "Label to search on" where short' = 'l')
         ]
       )? .> add_help()?
     else
@@ -42,6 +43,8 @@ actor Main
 
     let show_empty = cmd.option("show_empty").bool()
 
+    let label = cmd.option("label").string()
+
     let headers = recover val
       [
         ("Authorization", recover val "token " + token end)
@@ -50,6 +53,7 @@ actor Main
 
     let ctx: Context iso = recover Context(headers,
       org,
+      label,
       show_empty,
       env.out,
       env.err,
