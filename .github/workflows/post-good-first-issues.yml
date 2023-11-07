@@ -1,14 +1,13 @@
-name: Post sync agenda
+name: Post good first issues
 
 on:
   workflow_dispatch:
-  repository_dispatch:
-    types:
-      - post-agenda
+  schedule:
+    - cron: '0 14 * * Mon'
 
 jobs:
-  post-agenda:
-    name: Post sync agenda to Zulip
+  post-ISSUES:
+    name: Post good first issues to Zulip
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/ponylang/pony-sync-helper-ci-builder:release
@@ -23,19 +22,19 @@ jobs:
       - name: Run sync-helper
         run: |
           {
-            echo 'AGENDA<<EOF'
-            ./pony-sync-helper --label "discuss during sync" --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN"
+            echo 'ISSUES<<EOF'
+            ./pony-sync-helper --label "good first issue" --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN"
             echo 'EOF'
           } >> "$GITHUB_ENV"
         env:
           PONY_SYNC_HELPER_GITHUB_TOKEN: ${{ secrets.PONYLANG_MAIN_API_TOKEN }}
-      - name: Post agenda
+      - name: Post Issues
         uses: zulip/github-actions-zulip/send-message@b62d5a0e48a4d984ea4fce5dd65ba691963d4db4
         with:
           api-key: ${{ secrets.ZULIP_SYNC_EVENT_API_KEY }}
           email: ${{ secrets.ZULIP_SYNC_EVENT_EMAIL }}
           organization-url: 'https://ponylang.zulipchat.com/'
-          to: sync
+          to: contribute to Pony
           type: stream
-          topic: ${{ env.DATE }}
-          content: ${{ env.AGENDA }}
+          topic: Good first issues as of ${{env.DATE}}
+          content: ${{ env.ISSUES }}

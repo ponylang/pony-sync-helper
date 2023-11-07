@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a tool for generating a list of issues to review during the Pony sync meetings, but it can generally be used to retrieve a list of issues from all of the repos belonging to an organization.
+This is a tool for generating a list of issues from Pony repositories. It's primary usage is to generate a list of issues to review during the Pony sync meetings, but it can generally be used to retrieve a list of issues from all of the repos belonging to an organization.
 
 ## Building
 
@@ -20,15 +20,15 @@ To run the program you specify the GitHub org that you want to target.
 
 ```bash
 export PONY_SYNC_HELPER_GITHUB_TOKEN="12345678"
-./pony-sync-helper --org ponylang
+./pony-sync-helper --org ponylang --label "discuss during sync"
 ```
 
 ```bash
-./pony-sync-helper --org ponylang --github_token 12345678
+./pony-sync-helper --org ponylang --label "discuss during sync" --github_token 12345678
 ```
 
 By default only repos with issues are shown. To show all repos, even those without issues, use the `--show_empty` option.
 
 ```bash
-./pony-sync-helper --org ponylang --show_empty --github_token 12345678
+./pony-sync-helper --org ponylang  --label "discuss during sync" --show_empty --github_token 12345678
 ```
