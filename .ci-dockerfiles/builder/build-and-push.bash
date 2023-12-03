@@ -4,7 +4,8 @@ set -o errexit
 set -o nounset
 
 #
-# *** You should already be logged in to DockerHub when you run this ***
+# *** You should already be logged in to GitHub Container Registrṡ when you run
+#     this ***
 #
 
 DOCKERFILE_DIR="$(dirname "$0")"
