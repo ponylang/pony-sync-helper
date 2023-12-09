@@ -10,31 +10,18 @@ jobs:
     name: Post good first issues to Zulip
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/ponylang/pony-sync-helper-ci-builder:release
+      image: ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:release
     steps:
       - uses: actions/checkout@v3
-      - name: Today's date
-        run: echo "DATE=$(date +%Y-%m-%d)" >> "$GITHUB_ENV"
       - name: Build sync-helper
         run: |
           corral fetch
           corral run -- ponyc -Dopenssl_0.9.0
-      - name: Run sync-helper
+      - name: Get good first issues and post to Zulip
         run: |
-          {
-            echo 'ISSUES<<EOF'
-            ./pony-sync-helper --label "good first issue" --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN"
-            echo 'EOF'
-          } >> "$GITHUB_ENV"
+          ./pony-sync-helper --label "good first issue" --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN" | /post-good-first-issues.py
         env:
           PONY_SYNC_HELPER_GITHUB_TOKEN: ${{ secrets.PONYLANG_MAIN_API_TOKEN }}
-      - name: Post Issues
-        uses: zulip/github-actions-zulip/send-message@b62d5a0e48a4d984ea4fce5dd65ba691963d4db4
-        with:
-          api-key: ${{ secrets.ZULIP_SYNC_EVENT_API_KEY }}
-          email: ${{ secrets.ZULIP_SYNC_EVENT_EMAIL }}
-          organization-url: 'https://ponylang.zulipchat.com/'
-          to: contribute to Pony
-          type: stream
-          topic: Good first issues as of ${{env.DATE}}
-          content: ${{ env.ISSUES }}
+          ZULIP_API_KEY: ${{ secrets.ZULIP_SYNC_EVENT_API_KEY }}
+          ZULIP_EMAIL: ${{ secrets.ZULIP_SYNC_EVENT_EMAIL }}
+          ZULIP_SITE: 'https://ponylang.zulipchat.com/'
