@@ -34,7 +34,7 @@ jobs:
           corral fetch
           corral run -- ponyc -Dopenssl_0.9.0
 
-  builder-image:
+  verify-builder-image-builds:
     name: Verify builder image builds
     runs-on: ubuntu-latest
     steps:
