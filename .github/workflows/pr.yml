@@ -35,7 +35,7 @@ jobs:
           corral run -- ponyc -Dopenssl_0.9.0
 
   verify-builder-image-builds:
-    name: Verify builder image builds
+    name: Verify the builder image builds
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
