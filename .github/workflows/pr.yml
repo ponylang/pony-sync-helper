@@ -33,3 +33,12 @@ jobs:
         run: |
           corral fetch
           corral run -- ponyc -Dopenssl_0.9.0
+
+  verify-builder-image-builds:
+    name: Verify the builder image builds
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build docker image
+      working-directory: ./.ci-dockerfiles/builder
+      run: docker build . --file Dockerfile
