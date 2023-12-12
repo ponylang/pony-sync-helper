@@ -12,7 +12,7 @@ for line in sys.stdin.readlines():
     if len(current_message) + len(line) <= 7000:
         current_message += line + "\n"
     else:
-        # We have a decent chunk of cotent to post at this point.
+        # We have a decent chunk of content to post at this point.
         # We are now looking for the next repository to start a new message.
         # We don't want to break during a repository as it messes up the
         # markdown formatting of the message in Zulip.
