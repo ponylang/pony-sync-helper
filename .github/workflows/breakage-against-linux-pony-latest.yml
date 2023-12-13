@@ -6,7 +6,7 @@ on:
 
 jobs:
   rebuild-builder:
-    name: Update builder
+    name: Update "builder" image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -32,7 +32,7 @@ jobs:
           content: ${{ github.server_url}}/${{ github.repository }}/actions/runs/${{ github.run_id }} failed.
 
   rebuild-good-first-issues:
-    name: Update builder
+    name: Update "good first issues" image
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
