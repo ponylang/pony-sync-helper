@@ -48,6 +48,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        # v2.2.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
         run: docker build --pull --build-arg FROM_TAG="latest" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" -f .ci-dockerfiles/good-first-issues/Dockerfile .
       - name: Lint post-good-first-issues.py
@@ -58,5 +65,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Login to GitHub Container Registry
+        # v2.2.0
+        uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
         run: docker build --pull --build-arg FROM_TAG="latest" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" -f .ci-dockerfiles/good-first-issues/Dockerfile .

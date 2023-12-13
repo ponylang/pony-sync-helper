@@ -1,8 +1,7 @@
 ARG FROM_TAG=release
-FROM ghcr.io/ponylang/shared-docker-ci-x86-64-unknown-linux-builder-with-libressl-3.7.3:${FROM_TAG}
+FROM ghcr.io/ponylang/pony-sync-helper-ci-builder:${FROM_TAG}
 
 RUN apk add --update --no-cache \
-  pcre2-dev \
   python3 \
   python3-dev \
   py3-pip
