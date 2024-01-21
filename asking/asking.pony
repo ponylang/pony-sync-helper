@@ -55,7 +55,7 @@ primitive Asking
     end
 
     let sentreq =
-      http.HTTPClient(TCPConnectAuth(auth), sslctx)(consume req, AskingNotifyFactory(success, failure))?
+      http.HTTPClient(TCPConnectAuth(auth), AskingNotifyFactory(success, failure), sslctx)(consume req)?
 
 class AskingNotifyFactory is http.HandlerFactory
   let _success: {(Response)} val
