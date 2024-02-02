@@ -9,7 +9,7 @@ jobs:
     name: Update "builder" image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       - name: Login to GitHub Container Registry
         # v2.2.0
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc
@@ -35,7 +35,7 @@ jobs:
     name: Update "good first issues" image
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       - name: Login to GitHub Container Registry
         # v2.2.0
         uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc
@@ -65,7 +65,7 @@ jobs:
     container:
       image: ghcr.io/ponylang/pony-sync-helper-ci-builder:latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4.1.1
       - name: Test with a recent ponyc from main
         run: |
           corral fetch
