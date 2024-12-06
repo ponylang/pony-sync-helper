@@ -6,7 +6,7 @@ RUN apk add --update --no-cache \
   python3-dev \
   py3-pip
 
-RUN pip3 install --upgrade pip \
+RUN pip3 install --upgrade --break-system-packages pip \
   pylint \
   zulip
 
