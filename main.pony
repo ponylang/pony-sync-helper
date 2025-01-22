@@ -112,8 +112,8 @@ primitive ExtractReposNextLastFromResponse
     let repos = recover iso Array[String] end
     let json = recover val JsonDoc .> parse(body)? end
 
-    for i in Extractor(json.data).as_array()?.values() do
-      let i' = Extractor(i)
+    for i in JsonExtractor(json.data).as_array()?.values() do
+      let i' = JsonExtractor(i)
       repos.push(i'("full_name")?.as_string()?)
     end
 
@@ -131,8 +131,8 @@ primitive ExtractIssuesNextLastFromResponse
 
     let json = recover val JsonDoc .> parse(body)? end
 
-    for i in Extractor(json.data).as_array()?.values() do
-      let i' = Extractor(i)
+    for i in JsonExtractor(json.data).as_array()?.values() do
+      let i' = JsonExtractor(i)
       let title = i'("title")?.as_string()?
       let number = i'("number")?.as_i64()?
       let url = i'("html_url")?.as_string()?
