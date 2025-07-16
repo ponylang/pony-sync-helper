@@ -1,7 +1,7 @@
 use "collections"
 use http = "http"
-use "net_ssl"
 use "net"
+use "ssl/net"
 
 primitive AuthFailed
 primitive ConnectionClosed
