@@ -1,197 +1,148 @@
-use "asking"
 use "collections"
-use  h = "http"
+use github = "github_rest_api"
+use req = "github_rest_api/request"
 use "interpolate"
+use "promises"
 
-trait val HelperState
-  fun start(hsm: HelperStateMachine ref): HelperState =>
-    ErrorState
-  fun repos(hsm: HelperStateMachine ref, resp: Response): HelperState =>
-    ErrorState
-  fun finished_repos(hsm: HelperStateMachine ref): HelperState =>
-    ErrorState
-  fun repo_issues(hsm: HelperStateMachine ref, resp: Response, repo: String): HelperState =>
-    ErrorState
+actor SyncHelper
+  """
+  Fetches all repositories for a GitHub organization, then fetches issues
+  with a given label from each repository. Outputs a markdown-formatted
+  summary of PRs and issues per repo.
+  """
+  let _creds: req.Credentials
+  let _org: String
+  let _label: String
+  let _show_empty: Bool
+  let _out: OutStream
+  let _err: OutStream
+  let _repos: Array[String] = Array[String]
+  let _issues: Map[String, Array[github.Issue]] =
+    Map[String, Array[github.Issue]]
+  let _prs: Map[String, Array[github.Issue]] =
+    Map[String, Array[github.Issue]]
+  let _completed: Set[String] = Set[String]
 
-primitive ErrorState is HelperState
-
-primitive AwaitingRepos is HelperState
-  fun start(hsm: HelperStateMachine ref): HelperState =>
-    try
-      let url: String =
-        "https://api.github.com/orgs/" + hsm.ctx.org + "/repos"
-      GetRepoNames(hsm, url)?
-    end
-    AwaitingRepos
-
-  fun repos(hsm: HelperStateMachine ref, resp: Response): HelperState =>
-    try
-      (let repos_list, let next, let last) = ExtractReposNextLastFromResponse(resp)?
-
-      hsm.ctx.repos.append(repos_list)
-
-      for repo in repos_list.values() do
-        hsm.ctx.issues(repo) = Array[Issue](1000)
-        hsm.ctx.prs(repo) = Array[PR](1000)
-      end
-
-      match next
-      | let next': String =>
-        GetRepoNames(hsm, next')?
-      else
-        hsm.finished_repos()
-      end
-    end
-    AwaitingRepos
-
-  fun finished_repos(hsm: HelperStateMachine ref): HelperState =>
-    Sort[Array[String], String](hsm.ctx.repos)
-
-    for r in hsm.ctx.repos.values() do
-      try
-        GetRepoIssues(hsm, r)?
-      end
-    end
-
-    AwaitingRepoIssues
-
-primitive AwaitingRepoIssues is HelperState
-  fun repo_issues(hsm: HelperStateMachine ref, resp: Response, repo: String): HelperState =>
-    try
-      (let issues, let next, let last) = ExtractIssuesNextLastFromResponse(resp)?
-
-      for i in issues.values() do
-        match i
-        | let issue: Issue =>
-          hsm.ctx.issues(repo)?.push(issue)
-        | let pr: PR =>
-          hsm.ctx.prs(repo)?.push(pr)
-        end
-      end
-
-      match next
-      | let next': String =>
-        GetRepoIssues(hsm, repo, next')?
-      else
-        hsm.ctx.received_all_issues.set(repo)
-      end
-    end
-
-    if hsm.ctx.received_all_issues.size() == hsm.ctx.repos.size() then
-      let output = Array[String]
-
-      let int = Interpolate("  * {} ([{}]({}))")
-
-      for r in hsm.ctx.repos.values() do
-        let prs = hsm.ctx.prs.get_or_else(r, [])
-        let iss = hsm.ctx.issues.get_or_else(r, [])
-
-        if (prs.size() == 0) and (iss.size() == 0) and (not hsm.ctx.show_empty) then
-          continue
-        end
-
-        output.push("**" + r + "**")
-
-        output.push("* prs: " + prs.size().string())
-
-        for pr in prs.values() do
-          output.push(int([pr.title; pr.number; pr.url].values()))
-        end
-
-        output.push("* issues: " + iss.size().string())
-
-        for issue in iss.values() do
-          output.push(int([issue.title; issue.number; issue.url].values()))
-        end
-
-        output.push("")
-      end
-      hsm.ctx.out.print("\n".join(output.values()))
-
-    end
-
-    AwaitingRepoIssues
-
-primitive GetRepoNames
-  fun apply(hsm: HelperStateMachine ref, url: String) ? =>
-    let hsm_t: HelperStateMachine = hsm
-    Asking(hsm.ctx.auth,
-      url,
-      CheckerWrapper({(resp: Response) => hsm_t.http_error(resp)}, {(resp: Response) => hsm_t.repos(resp)})
-      where method = "GET", headers = hsm.ctx.headers)?
-
-primitive GetRepoIssues
-  fun apply(hsm: HelperStateMachine ref, repo: String, url: (None | String) = None) ? =>
-    let hsm_t: HelperStateMachine = hsm
-
-    let url' = match url
-    | let u: String =>
-      u
-    else
-      "https://api.github.com/repos/" + repo + "/issues?labels=" + h.URLEncode.encode(hsm.ctx.label, h.URLPartQuery)?
-    end
-
-    Asking(hsm.ctx.auth,
-      url',
-      CheckerWrapper({(resp: Response) => hsm_t.http_error(resp)}, {(resp: Response) => hsm_t.repo_issues(resp, repo)})
-      where method = "GET", headers = hsm.ctx.headers)?
-
-class Context
-  let repos: Array[String] = Array[String]
-  let received_all_issues: Set[String] = Set[String]
-  let issues: Map[String, Array[(Issue)]] = Map[String, Array[Issue]]
-  let prs: Map[String, Array[(PR)]] = Map[String, Array[PR]]
-  let org: String
-  let label: String
-  let headers: Array[(String, String)] val
-  let show_empty: Bool
-  let out: OutStream
-  let err: OutStream
-  let auth: AmbientAuth
-
-  new create(headers': Array[(String, String)] val,
-    org': String,
-    label': String,
-    show_empty': Bool,
-    out': OutStream,
-    err': OutStream,
-    auth': AmbientAuth)
+  new create(creds: req.Credentials, org: String, label: String,
+    show_empty: Bool, out: OutStream, err: OutStream)
   =>
-    headers = headers'
-    org = org'
-    label = label'
-    show_empty = show_empty'
-    out = out'
-    err = err'
-    auth = auth'
-
-actor HelperStateMachine
-  var _state: HelperState
-  let ctx: Context
-
-  new create(ctx': Context iso) =>
-    _state = AwaitingRepos
-    ctx = consume ctx'
+    _creds = creds
+    _org = org
+    _label = label
+    _show_empty = show_empty
+    _out = out
+    _err = err
 
   be start() =>
-    _state = _state.start(this)
+    let p = github.GetOrganizationRepositories(_org, _creds)
+    let self: SyncHelper tag = this
+    p.next[None]({(result) => self.repos_page(consume result)})
 
-  be repos(resp: Response) =>
-    _state = _state.repos(this, resp)
+  be repos_page(
+    result: (github.PaginatedList[github.Repository] | req.RequestError))
+  =>
+    match result
+    | let pl: github.PaginatedList[github.Repository] =>
+      for repo in pl.results.values() do
+        let name = repo.full_name
+        _repos.push(name)
+        _issues(name) = Array[github.Issue]
+        _prs(name) = Array[github.Issue]
+      end
 
-  be finished_repos() =>
-    _state = _state.finished_repos(this)
-
-  be repo_issues(resp: Response, repo: String) =>
-    _state = _state.repo_issues(this, resp, repo)
-
-  be http_error(resp: Response) =>
-    ctx.err.print("ERROR!")
-
-    for (k, v) in resp.headers.pairs() do
-      ctx.err.print("".join(["("; k; ", "; v; ")"].values()))
+      match pl.next_page()
+      | let p: Promise[
+        (github.PaginatedList[github.Repository] | req.RequestError)] =>
+        let self: SyncHelper tag = this
+        p.next[None]({(r) => self.repos_page(consume r)})
+      | None =>
+        _fetch_issues()
+      end
+    | let e: req.RequestError =>
+      _print_error(e)
     end
-    ctx.err.print(resp.body)
 
-    _state = ErrorState
+  be issues_page(repo: String,
+    result: (github.PaginatedList[github.Issue] | req.RequestError))
+  =>
+    match result
+    | let pl: github.PaginatedList[github.Issue] =>
+      for issue in pl.results.values() do
+        try
+          match issue.pull_request
+          | let _: github.IssuePullRequest =>
+            _prs(repo)?.push(issue)
+          | None =>
+            _issues(repo)?.push(issue)
+          end
+        end
+      end
 
+      match pl.next_page()
+      | let p: Promise[
+        (github.PaginatedList[github.Issue] | req.RequestError)] =>
+        let self: SyncHelper tag = this
+        p.next[None]({(r) => self.issues_page(repo, consume r)})
+      | None =>
+        _completed.set(repo)
+        if _completed.size() == _repos.size() then
+          _output()
+        end
+      end
+    | let e: req.RequestError =>
+      _print_error(e)
+    end
+
+  fun ref _fetch_issues() =>
+    Sort[Array[String], String](_repos)
+
+    if _repos.size() == 0 then
+      _output()
+      return
+    end
+
+    for repo_name in _repos.values() do
+      let parts = repo_name.split("/")
+      try
+        let owner = parts(0)?
+        let repo = parts(1)?
+        let p = github.GetRepositoryIssues(owner, repo, _creds
+          where labels = _label)
+        let self: SyncHelper tag = this
+        p.next[None]({(r) => self.issues_page(repo_name, consume r)})
+      end
+    end
+
+  fun _output() =>
+    let output = Array[String]
+    let int = Interpolate("  * {} ([{}]({}))")
+
+    for r in _repos.values() do
+      let prs = _prs.get_or_else(r, [])
+      let iss = _issues.get_or_else(r, [])
+
+      if (prs.size() == 0) and (iss.size() == 0) and (not _show_empty) then
+        continue
+      end
+
+      output.push("**" + r + "**")
+
+      output.push("* prs: " + prs.size().string())
+      for pr in prs.values() do
+        output.push(int([pr.title; pr.number; pr.html_url].values()))
+      end
+
+      output.push("* issues: " + iss.size().string())
+      for issue in iss.values() do
+        output.push(int([issue.title; issue.number; issue.html_url].values()))
+      end
+
+      output.push("")
+    end
+    _out.print("\n".join(output.values()))
+
+  fun _print_error(e: req.RequestError) =>
+    _err.print("ERROR!")
+    _err.print("Status: " + e.status.string())
+    _err.print(e.response_body)
+    _err.print(e.message)
