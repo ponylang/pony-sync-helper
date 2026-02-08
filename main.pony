@@ -9,6 +9,7 @@ actor Main
         "Gather recently modified issues from repos or all repos in a project (defaults to last 7 days)",
         [
           OptionSpec.string("github_token", "GitHub personal access token" where short' = 't', default' = "")
+          OptionSpec.bool("show_archived", "Show archived repos" where short' = 'a', default' = false)
           OptionSpec.bool("show_empty", "Show repos with no issues or PRs" where short' = 'e', default' = false)
           OptionSpec.string("org", "Target org" where short' = 'o')
           OptionSpec.string("label", "Label to search on" where short' = 'l')
@@ -33,11 +34,13 @@ actor Main
 
     let token = cmd.option("github_token").string()
     let org = cmd.option("org").string()
+    let show_archived = cmd.option("show_archived").bool()
     let show_empty = cmd.option("show_empty").bool()
     let label = cmd.option("label").string()
 
     let creds = req.Credentials(TCPConnectAuth(env.root),
       if token == "" then None else token end)
 
-    let helper = SyncHelper(creds, org, label, show_empty, env.out, env.err)
+    let helper = SyncHelper(creds, org, label, show_archived, show_empty,
+      env.out, env.err)
     helper.start()

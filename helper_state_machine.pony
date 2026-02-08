@@ -13,6 +13,7 @@ actor SyncHelper
   let _creds: req.Credentials
   let _org: String
   let _label: String
+  let _show_archived: Bool
   let _show_empty: Bool
   let _out: OutStream
   let _err: OutStream
@@ -24,11 +25,12 @@ actor SyncHelper
   let _completed: Set[String] = Set[String]
 
   new create(creds: req.Credentials, org: String, label: String,
-    show_empty: Bool, out: OutStream, err: OutStream)
+    show_archived: Bool, show_empty: Bool, out: OutStream, err: OutStream)
   =>
     _creds = creds
     _org = org
     _label = label
+    _show_archived = show_archived
     _show_empty = show_empty
     _out = out
     _err = err
@@ -44,6 +46,9 @@ actor SyncHelper
     match result
     | let pl: github.PaginatedList[github.Repository] =>
       for repo in pl.results.values() do
+        if repo.archived and (not _show_archived) then
+          continue
+        end
         let name = repo.full_name
         _repos.push(name)
         _issues(name) = Array[github.Issue]

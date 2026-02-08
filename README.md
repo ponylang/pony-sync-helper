@@ -27,8 +27,14 @@ export PONY_SYNC_HELPER_GITHUB_TOKEN="12345678"
 ./pony-sync-helper --org ponylang --label "discuss during sync" --github_token 12345678
 ```
 
+By default archived repos are excluded. To include them, use the `--show_archived` option.
+
+```bash
+./pony-sync-helper --org ponylang --label "discuss during sync" --show_archived --github_token 12345678
+```
+
 By default only repos with issues are shown. To show all repos, even those without issues, use the `--show_empty` option.
 
 ```bash
-./pony-sync-helper --org ponylang  --label "discuss during sync" --show_empty --github_token 12345678
+./pony-sync-helper --org ponylang --label "discuss during sync" --show_empty --github_token 12345678
 ```
