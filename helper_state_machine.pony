@@ -43,7 +43,7 @@ actor SyncHelper
   be repos_page(
     result: (github.PaginatedList[github.Repository] | req.RequestError))
   =>
-    match result
+    match \exhaustive\ result
     | let pl: github.PaginatedList[github.Repository] =>
       for repo in pl.results.values() do
         if repo.archived and (not _show_archived) then
@@ -55,7 +55,7 @@ actor SyncHelper
         _prs(name) = Array[github.Issue]
       end
 
-      match pl.next_page()
+      match \exhaustive\ pl.next_page()
       | let p: Promise[
         (github.PaginatedList[github.Repository] | req.RequestError)] =>
         let self: SyncHelper tag = this
@@ -70,11 +70,11 @@ actor SyncHelper
   be issues_page(repo: String,
     result: (github.PaginatedList[github.Issue] | req.RequestError))
   =>
-    match result
+    match \exhaustive\ result
     | let pl: github.PaginatedList[github.Issue] =>
       for issue in pl.results.values() do
         try
-          match issue.pull_request
+          match \exhaustive\ issue.pull_request
           | let _: github.IssuePullRequest =>
             _prs(repo)?.push(issue)
           | None =>
@@ -83,7 +83,7 @@ actor SyncHelper
         end
       end
 
-      match pl.next_page()
+      match \exhaustive\ pl.next_page()
       | let p: Promise[
         (github.PaginatedList[github.Issue] | req.RequestError)] =>
         let self: SyncHelper tag = this
