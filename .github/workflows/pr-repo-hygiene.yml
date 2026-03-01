@@ -1,0 +1,67 @@
+name: Repository Hygiene
+
+on: pull_request
+
+concurrency:
+  group: pr-repo-hygiene-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  packages: read
+
+jobs:
+  superlinter:
+    name: Lint bash, docker, markdown, and yaml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Lint codebase
+        uses: docker://github/super-linter:v3.8.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_ALL_CODEBASE: true
+          VALIDATE_BASH: true
+          VALIDATE_DOCKERFILE: true
+          VALIDATE_MD: true
+          VALIDATE_YAML: true
+
+  verify-builder-image-builds:
+    name: Verify the builder image builds
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4.1.1
+    - name: Build docker image
+      working-directory: ./.ci-dockerfiles/builder
+      run: docker build . --file Dockerfile
+
+  lint-post-good-first-issues:
+    name: Verify that post-good-first-issues.py passes linting checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Login to GitHub Container Registry
+        # v2.2.0
+        uses: docker/login-action@5139682d94efc37792e6b54386b5b470a68a4737
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build docker image
+        run: docker build --pull --build-arg FROM_TAG="latest" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" -f .ci-dockerfiles/good-first-issues/Dockerfile .
+      - name: Lint post-good-first-issues.py
+        run: docker run --entrypoint pylint --rm "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" /post-good-first-issues.py
+
+  verify-good-first-issues-image-builds:
+    name: Verify the good-first-issues image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4.1.1
+      - name: Login to GitHub Container Registry
+        # v2.2.0
+        uses: docker/login-action@5139682d94efc37792e6b54386b5b470a68a4737
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build docker image
+        run: docker build --pull --build-arg FROM_TAG="latest" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" -f .ci-dockerfiles/good-first-issues/Dockerfile .
