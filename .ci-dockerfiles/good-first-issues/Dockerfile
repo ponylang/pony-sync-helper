@@ -1,7 +1,7 @@
 ARG FROM_TAG=release
 FROM ghcr.io/ponylang/pony-sync-helper-ci-builder:${FROM_TAG}
 
-RUN apk add --update --no-cache \
+RUN apk add --update --upgrade --no-cache \
   python3 \
   python3-dev \
   py3-pip
