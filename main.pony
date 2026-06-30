@@ -1,5 +1,5 @@
 use "cli"
-use "net"
+use lori = "lori"
 use req = "github_rest_api/request"
 
 actor Main
@@ -38,7 +38,7 @@ actor Main
     let show_empty = cmd.option("show_empty").bool()
     let label = cmd.option("label").string()
 
-    let creds = req.Credentials(TCPConnectAuth(env.root),
+    let creds = req.Credentials(lori.TCPConnectAuth(env.root),
       if token == "" then None else token end)
 
     let helper = SyncHelper(creds, org, label, show_archived, show_empty,

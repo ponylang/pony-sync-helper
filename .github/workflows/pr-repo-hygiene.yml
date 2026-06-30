@@ -47,9 +47,9 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
-        run: docker build --pull --build-arg FROM_TAG="latest" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" -f .ci-dockerfiles/good-first-issues/Dockerfile .
+        run: docker build --pull --build-arg FROM_TAG="nightly" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:nightly" -f .ci-dockerfiles/good-first-issues/Dockerfile .
       - name: Lint post-good-first-issues.py
-        run: docker run --entrypoint pylint --rm "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" /post-good-first-issues.py
+        run: docker run --entrypoint pylint --rm "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:nightly" /post-good-first-issues.py
 
   verify-good-first-issues-image-builds:
     name: Verify the good-first-issues image builds
@@ -64,4 +64,4 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build docker image
-        run: docker build --pull --build-arg FROM_TAG="latest" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:latest" -f .ci-dockerfiles/good-first-issues/Dockerfile .
+        run: docker build --pull --build-arg FROM_TAG="nightly" -t "ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues:nightly" -f .ci-dockerfiles/good-first-issues/Dockerfile .

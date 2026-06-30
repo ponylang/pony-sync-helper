@@ -16,7 +16,7 @@ set -o nounset
 DOCKERFILE_DIR="$(dirname "$0")"
 NAME="ghcr.io/ponylang/pony-sync-helper-ci-good-first-issues"
 
-# built from x86-64-unknown-linux-builder release tag
+# built from pony-sync-helper-ci-builder release tag
 FROM_TAG=release
 TAG_AS=release
 docker build --pull --build-arg FROM_TAG="${FROM_TAG}" \
@@ -24,9 +24,9 @@ docker build --pull --build-arg FROM_TAG="${FROM_TAG}" \
   -f "${DOCKERFILE_DIR}/Dockerfile" .
 docker push "${NAME}:${TAG_AS}"
 
-# built from x86-64-unknown-linux-builder latest tag
-FROM_TAG=latest
-TAG_AS=latest
+# built from pony-sync-helper-ci-builder nightly tag
+FROM_TAG=nightly
+TAG_AS=nightly
 docker build --pull --build-arg FROM_TAG="${FROM_TAG}" \
   -t "${NAME}:${TAG_AS}" \
   -f "${DOCKERFILE_DIR}/Dockerfile" .
