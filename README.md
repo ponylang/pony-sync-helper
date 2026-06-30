@@ -6,10 +6,11 @@ This is a tool for generating a list of issues from Pony repositories. It's prim
 
 ## Building
 
-It relies on SSL, so you must pass an SSL version to use.
+It relies on SSL, so you must pass an SSL version to use: `-Dopenssl_3.0.x`,
+`-Dopenssl_1.1.x`, or `-Dlibressl`.
 
 ```bash
-corral run -- ponyc -Dopenssl_0.9.0
+corral run -- ponyc -Dopenssl_3.0.x
 ```
 
 ## Usage

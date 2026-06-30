@@ -28,4 +28,4 @@ jobs:
       - name: Builds with the most recent ponyc nightly
         run: |
           corral fetch
-          corral run -- ponyc -Dopenssl_0.9.0
+          corral run -- ponyc -Dlibressl

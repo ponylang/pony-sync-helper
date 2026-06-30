@@ -16,7 +16,7 @@ jobs:
       - name: Build sync-helper
         run: |
           corral fetch
-          corral run -- ponyc -Dopenssl_0.9.0
+          corral run -- ponyc -Dlibressl
       - name: Get good first issues and post to Zulip
         run: |
           ./pony-sync-helper --label "good first issue" --org ponylang --github_token "$PONY_SYNC_HELPER_GITHUB_TOKEN" | /post-good-first-issues.py
