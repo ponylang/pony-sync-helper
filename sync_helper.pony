@@ -24,8 +24,14 @@ actor SyncHelper
     Map[String, Array[github.Issue]]
   let _completed: Set[String] = Set[String]
 
-  new create(creds: req.Credentials, org: String, label: String,
-    show_archived: Bool, show_empty: Bool, out: OutStream, err: OutStream)
+  new create(
+    creds: req.Credentials,
+    org: String,
+    label: String,
+    show_archived: Bool,
+    show_empty: Bool,
+    out: OutStream,
+    err: OutStream)
   =>
     _creds = creds
     _org = org
@@ -38,7 +44,7 @@ actor SyncHelper
   be start() =>
     let p = github.GetOrganizationRepositories(_org, _creds)
     let self: SyncHelper tag = this
-    p.next[None]({(result) => self.repos_page(consume result)})
+    p.next[None]({(result) => self.repos_page(consume result) })
 
   be repos_page(
     result: (github.PaginatedList[github.Repository] | req.RequestError))
@@ -59,7 +65,7 @@ actor SyncHelper
       | let p: Promise[
         (github.PaginatedList[github.Repository] | req.RequestError)] =>
         let self: SyncHelper tag = this
-        p.next[None]({(r) => self.repos_page(consume r)})
+        p.next[None]({(r) => self.repos_page(consume r) })
       | None =>
         _fetch_issues()
       end
@@ -87,7 +93,7 @@ actor SyncHelper
       | let p: Promise[
         (github.PaginatedList[github.Issue] | req.RequestError)] =>
         let self: SyncHelper tag = this
-        p.next[None]({(r) => self.issues_page(repo, consume r)})
+        p.next[None]({(r) => self.issues_page(repo, consume r) })
       | None =>
         _completed.set(repo)
         if _completed.size() == _repos.size() then
@@ -111,10 +117,12 @@ actor SyncHelper
       try
         let owner = parts(0)?
         let repo = parts(1)?
-        let p = github.GetRepositoryIssues(owner, repo, _creds
-          where labels = _label)
+        let p =
+          github.GetRepositoryIssues(
+            owner, repo, _creds where labels = _label)
         let self: SyncHelper tag = this
-        p.next[None]({(r) => self.issues_page(repo_name, consume r)})
+        p.next[None](
+          {(r) => self.issues_page(repo_name, consume r) })
       end
     end
 

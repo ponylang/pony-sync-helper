@@ -1,4 +1,11 @@
+"""
+Simple string interpolation using `{}` placeholders.
+"""
+
 class Interpolate
+  """
+  Replaces `{}` placeholders in a template string with successive arguments.
+  """
   let _template: String
 
   new create(template: String) =>
