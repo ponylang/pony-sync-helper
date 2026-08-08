@@ -21,4 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - name: Lint
-        run: pony-lint
+        run: |
+          corral fetch
+          corral run -- pony-lint .
