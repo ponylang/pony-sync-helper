@@ -4,23 +4,38 @@ use req = "github_rest_api/request"
 
 actor Main
   new create(env: Env) =>
-    let cs = try
-      CommandSpec.leaf("pony_sync_helper",
-        "Gather recently modified issues from repos or all repos in a project (defaults to last 7 days)",
-        [
-          OptionSpec.string("github_token", "GitHub personal access token" where short' = 't', default' = "")
-          OptionSpec.bool("show_archived", "Show archived repos" where short' = 'a', default' = false)
-          OptionSpec.bool("show_empty", "Show repos with no issues or PRs" where short' = 'e', default' = false)
-          OptionSpec.string("org", "Target org" where short' = 'o')
-          OptionSpec.string("label", "Label to search on" where short' = 'l')
-        ]
-      )? .> add_help()?
-    else
-      env.exitcode(-1)
-      return
-    end
+    let cs =
+      try
+        CommandSpec.leaf(
+          "pony_sync_helper",
+          "Gather recently modified issues from repos or "
+            + "all repos in a project (defaults to last 7 days)",
+          [
+            OptionSpec.string(
+              "github_token",
+              "GitHub personal access token"
+              where short' = 't', default' = "")
+            OptionSpec.bool(
+              "show_archived", "Show archived repos"
+              where short' = 'a', default' = false)
+            OptionSpec.bool(
+              "show_empty",
+              "Show repos with no issues or PRs"
+              where short' = 'e', default' = false)
+            OptionSpec.string(
+              "org", "Target org" where short' = 'o')
+            OptionSpec.string(
+              "label", "Label to search on"
+              where short' = 'l')
+          ]
+        )? .> add_help()?
+      else
+        env.exitcode(-1)
+        return
+      end
 
-    let cmd = match \exhaustive\ CommandParser(cs).parse(env.args, env.vars)
+    let cmd =
+      match \exhaustive\ CommandParser(cs).parse(env.args, env.vars)
       | let c: Command =>
         c
       | let ch: CommandHelp =>
@@ -38,9 +53,18 @@ actor Main
     let show_empty = cmd.option("show_empty").bool()
     let label = cmd.option("label").string()
 
-    let creds = req.Credentials(lori.TCPConnectAuth(env.root),
-      if token == "" then None else token end)
+    let creds =
+      req.Credentials(
+        lori.TCPConnectAuth(env.root),
+        if token == "" then None else token end)
 
-    let helper = SyncHelper(creds, org, label, show_archived, show_empty,
-      env.out, env.err)
+    let helper =
+      SyncHelper(
+        creds,
+        org,
+        label,
+        show_archived,
+        show_empty,
+        env.out,
+        env.err)
     helper.start()
