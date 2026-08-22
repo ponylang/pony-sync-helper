@@ -26,6 +26,4 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - name: Builds with the most recent ponyc nightly
-        run: |
-          corral fetch
-          corral run -- ponyc -Dlibressl
+        run: make build ssl=libressl

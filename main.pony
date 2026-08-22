@@ -8,8 +8,8 @@ actor Main
       try
         CommandSpec.leaf(
           "pony_sync_helper",
-          "Gather recently modified issues from repos or "
-            + "all repos in a project (defaults to last 7 days)",
+          "Gather recently modified issues from repos or " +
+            "all repos in a project (defaults to last 7 days)",
           [
             OptionSpec.string(
               "github_token",
