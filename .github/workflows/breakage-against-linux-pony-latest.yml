@@ -70,9 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
       - name: Test with a recent ponyc from main
-        run: |
-          corral fetch
-          corral run -- ponyc -Dlibressl
+        run: make build ssl=libressl
       - name: Send alert on failure
         if: ${{ failure() }}
         uses: zulip/github-actions-zulip/send-message@bd8ec52de371d139ae8313661b7d8318c19266aa
