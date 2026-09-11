@@ -1,5 +1,5 @@
 use "cli"
-use lori = "lori"
+use "net"
 use req = "github_rest_api/request"
 
 actor Main
@@ -55,7 +55,7 @@ actor Main
 
     let creds =
       req.Credentials(
-        lori.TCPConnectAuth(env.root),
+        TCPConnectAuth(env.root),
         if token == "" then None else token end)
 
     let helper =
