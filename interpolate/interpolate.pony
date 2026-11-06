@@ -11,7 +11,7 @@ class Interpolate
   new create(template: String) =>
     _template = template
 
-  fun apply(args: Iterator[Stringable]): String iso^ =>
+  fun apply(args: Iterator[Stringable]): String val =>
     let output: String iso = _template.clone()
 
     for arg in args do
