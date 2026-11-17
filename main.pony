@@ -14,19 +14,19 @@ actor Main
             OptionSpec.string(
               "github_token",
               "GitHub personal access token"
-              where short' = 't', default' = "")
+              where short' = 't', default' = "")?
             OptionSpec.bool(
               "show_archived", "Show archived repos"
-              where short' = 'a', default' = false)
+              where short' = 'a', default' = false)?
             OptionSpec.bool(
               "show_empty",
               "Show repos with no issues or PRs"
-              where short' = 'e', default' = false)
+              where short' = 'e', default' = false)?
             OptionSpec.string(
-              "org", "Target org" where short' = 'o')
+              "org", "Target org" where short' = 'o')?
             OptionSpec.string(
               "label", "Label to search on"
-              where short' = 'l')
+              where short' = 'l')?
           ]
         )? .> add_help()?
       else
