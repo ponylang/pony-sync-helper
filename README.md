@@ -4,6 +4,10 @@
 
 This is a tool for generating a list of issues from Pony repositories. It's primary usage is to generate a list of issues to review during the Pony sync meetings, but it can generally be used to retrieve a list of issues from all of the repos belonging to an organization.
 
+## Requirements
+
+ponyc 0.79.0 or later is required.
+
 ## Building
 
 It relies on SSL, so you must pass an SSL version to use: `-Dopenssl_3.0.x`,
